@@ -3,38 +3,64 @@
  */
 package com.niton.todo;
 
-import com.niton.reactj.ReactiveController;
-import com.niton.todo.ui.TodoView;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.niton.collections.backed.BackedPerformanceList;
+import com.niton.collections.backed.OOSSerializer;
+import com.niton.memory.direct.stores.FileStore;
+import com.niton.reactj.special.ReactiveList;
+import com.niton.todo.ui.TodoListController;
+import com.niton.todo.ui.TodoListView;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class App {
 
-    public static void main(String[] args) {
-        TodoView view = new TodoView();
-        TodoView view2 = new TodoView();
-        TodoTask task = new TodoTask("Clean the dishes","Mom told me to");
+	public static void main(String[] args) throws IOException {
+		FlatDarculaLaf.install();
 
-        ReactiveController<TodoController> controller = new ReactiveController<>(view,new TodoController());
-        controller.bind(task);
-        ReactiveController<TodoController> controller2 = new ReactiveController<>(view2,new TodoController());
-        controller2.bind(task);
+		//Find and create file
+		File f = new File(System.getProperty("user.home"),"jnotes.db");
+		boolean existed = f.exists();
+		if(!existed)
+			f.createNewFile();
 
-        JFrame frame = new JFrame();
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.getContentPane().setLayout(new GridLayout());
-        frame.getContentPane().add(view);
-        frame.getContentPane().add(view2);
-        frame.pack();
-        frame.setVisible(true);
+		List<TodoTask> list = new ArrayList<>();//new BackedPerformanceList<>(new FileStore(f),existed,new OOSSerializer<>());
+		ReactiveList<TodoTask> rlist = ReactiveList.create(list);
 
-        while (true){
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-            }
-            System.out.println(task);
-        }
-    }
+
+		TodoTask task = new TodoTask("Clean the dishes","Mom told me to");
+
+		TodoListView view = new TodoListView();
+		view.setData(rlist);
+		view.getOnRemove().listen(s -> {
+			System.out.println("Remove ("+s+")");
+			rlist.removeById(s);
+		});
+
+
+		rlist.add(task);
+
+		JButton adder = new JButton("Add");
+		JTextField field = new JTextField();
+
+
+		adder.addActionListener(e -> rlist.add(new TodoTask(field.getText(), "Ja YEET")));
+
+
+		JFrame frame = new JFrame();
+		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		frame.getContentPane().setLayout(new BoxLayout(frame.getContentPane(),BoxLayout.Y_AXIS));
+		frame.getContentPane().add(adder);
+		frame.getContentPane().add(field);
+		frame.getContentPane().add(view.getView());
+		frame.pack();
+		frame.setVisible(true);
+	}
 }

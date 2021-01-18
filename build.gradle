@@ -29,8 +29,10 @@ repositories {
 }
 
 dependencies {
-    compile(group: 'com.niton', name: 'backed-collections', version: '1.2.1')
-    compile(group: 'com.niton', name: 'reactj', version: '1.1.0-SNAPSHOT')
+    implementation(group: 'com.niton', name: 'backed-collections', version: '1.2.1')
+    implementation(group: 'com.niton', name: 'reactj-swing', version: '3.1.4-SNAPSHOT')
+    implementation 'com.formdev:flatlaf:0.44'
+
 }
 
 application {
